@@ -176,7 +176,7 @@ startup and refuses unsafe production combinations.
 | `STORAGE_DIR` | `./storage` | Private local storage root |
 | `STORAGE_DRIVER` | `local` | `local` or `s3` |
 | `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | empty | Required when `STORAGE_DRIVER=s3`; endpoint supports S3-compatible providers |
-| `LIBREOFFICE_PATH` | empty | Explicit `soffice` path; otherwise auto-detected |
+| `LIBREOFFICE_PATH` | empty | Explicit `soffice` path, otherwise auto-detected. Windows example: `C:\Program Files\LibreOffice\program\soffice.exe` |
 | `RETENTION_DAYS` | `30` | `0` disables expiry |
 | `CLEANUP_INTERVAL_MINUTES` | `60` | `0` disables the scheduled cleanup |
 | `RATE_LIMIT_MAX` | `300` | Requests per IP per 15 minutes |
@@ -537,9 +537,9 @@ LibreOffice previews, backups, costs, and troubleshooting — is in
 
 ## Known limitations
 
-- **No Office renderer by default.** Without LibreOffice, preview is an HTML
-  content reconstruction, not a pixel/pagination-accurate rendering. Open the
-  downloaded DOCX in Word for final layout review.
+- **No Office renderer without LibreOffice.** Without LibreOffice, preview is an
+  HTML content reconstruction, not a pixel/pagination-accurate rendering. Open
+  the downloaded DOCX in Word for final layout review.
 - **Even with LibreOffice**, PDF rendering is an approximation of how Word will
   lay out the document. Fonts unavailable on the server can reflow text.
 - **Inline formatting can change** when an edit spans mixed-format runs. The
