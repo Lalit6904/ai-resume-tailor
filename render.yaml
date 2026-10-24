@@ -1,0 +1,64 @@
+# Render Blueprint for AI Resume Tailor.
+# Documentation: https://render.com/docs/blueprint-spec
+#
+# MongoDB is hosted on MongoDB Atlas (see docs/DEPLOY_RENDER.md). This blueprint
+# only creates the web service and its persistent private storage disk.
+#
+# Apply it with: Render Dashboard -> New -> Blueprint -> select this repository.
+# Render prompts for every `sync: false` value during creation.
+
+services:
+  - type: web
+    name: ai-resume-tailor
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    # In-process job runner: keep exactly one instance.
+    numInstances: 1
+    disk:
+      name: resume-storage
+      mountPath: /app/storage
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Generated once by Render; a weak or placeholder secret is rejected in production.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      # Render terminates TLS, so cookies must be Secure and the proxy trusted.
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      # Paste the MongoDB Atlas SRV connection string, including the database name:
+      # mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/ai_resume_tailor?retryWrites=true&w=majority
+      - key: MONGODB_URI
+        sync: false
+      # CLIENT_ORIGIN is optional here: the server falls back to Render's
+      # RENDER_EXTERNAL_URL when the variable is not set. Set it explicitly when
+      # you attach a custom domain.
+      - key: STORAGE_DRIVER
+        value: local
+      - key: STORAGE_DIR
+        value: /app/storage
+      - key: MAX_UPLOAD_MB
+        value: "10"
+      - key: RETENTION_DAYS
+        value: "30"
+      - key: CLEANUP_INTERVAL_MINUTES
+        value: "60"
+      - key: RATE_LIMIT_MAX
+        value: "300"
+      - key: AI_PROVIDER
+        value: heuristic
+      # To use an LLM: set AI_PROVIDER to openai or anthropic and add AI_API_KEY
+      # in the Render dashboard (see docs/DEPLOY_RENDER.md, section 7).
+      - key: AI_MODEL
+        value: gpt-4.1-mini
+      - key: LOG_LEVEL
+        value: info

@@ -1,0 +1,98 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev: full stack",
+      "detail": "Runs the Express API and the Vite dev server together.",
+      "type": "npm",
+      "script": "dev",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "server: dev",
+      "detail": "Express API with node --watch on http://localhost:4000.",
+      "type": "npm",
+      "script": "dev",
+      "path": "server",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "client: dev",
+      "detail": "Vite dev server on http://localhost:5173. Used by the Chrome debug config.",
+      "type": "npm",
+      "script": "dev",
+      "path": "client",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE v",
+          "endsPattern": "Local:\\s+http://localhost"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test: run",
+      "detail": "Runs the 34 Vitest/Supertest tests once.",
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test: watch",
+      "detail": "Runs Vitest in watch mode.",
+      "type": "npm",
+      "script": "test:watch",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "build: client",
+      "detail": "Production build of the React client into client/dist.",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "smoke: live API",
+      "detail": "Runs scripts/smoke-test.mjs. The server must already be running.",
+      "type": "npm",
+      "script": "smoke",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

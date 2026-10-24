@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-ink-900 antialiased;
+  }
+
+  ::selection {
+    @apply bg-accent-200 text-ink-950;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid theme('colors.accent.500');
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .surface {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+
+  .subtle-grid {
+    background-image:
+      linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.slate.300') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: theme('colors.slate.300');
+    border-radius: 999px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Server-generated DOCX content preview.
+   This is deliberately an approximate HTML rendering, not a pixel-perfect
+   Word render. The UI labels it accordingly. PDF is used when LibreOffice is
+   available on the server.
+--------------------------------------------------------------------------- */
+.doc-preview {
+  background: #e8eaee;
+  padding: 28px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.doc-preview > .doc-p,
+.doc-preview > .doc-table {
+  width: 100%;
+  max-width: 8.5in;
+  background: #fff;
+}
+
+.doc-preview > .doc-p:first-child {
+  padding-top: 0.75in;
+  border-radius: 3px 3px 0 0;
+}
+
+.doc-preview > .doc-p,
+.doc-preview > .doc-table {
+  margin: 0;
+}
+
+.doc-preview {
+  counter-reset: none;
+}
+
+.doc-preview > .doc-p {
+  padding-left: 0.85in;
+  padding-right: 0.85in;
+  font-size: 11pt;
+  line-height: 1.45;
+  color: #111827;
+  min-height: 1.35em;
+}
+
+.doc-preview > .doc-p:last-of-type {
+  padding-bottom: 0.75in;
+  border-radius: 0 0 3px 3px;
+}
+
+.doc-preview > .doc-p + .doc-p {
+  padding-top: 2px;
+}
+
+.doc-preview > .doc-heading {
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+  margin-top: 10px;
+}
+
+.doc-preview > .doc-heading-1 {
+  font-size: 13pt;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 3px;
+}
+
+.doc-preview > .doc-heading-2 {
+  font-size: 12pt;
+}
+
+.doc-preview > .doc-heading-0 {
+  font-size: 22pt;
+  text-align: center;
+  padding-top: 0.5in;
+}
+
+.doc-bullet {
+  display: inline-block;
+  width: 1.1em;
+  color: #0b877f;
+}
+
+.doc-link {
+  color: #0b877f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.doc-empty {
+  min-height: 0.6em;
+}
+
+.doc-table {
+  border-collapse: collapse;
+  table-layout: auto;
+  margin: 4px auto;
+  padding-left: 0.85in;
+  padding-right: 0.85in;
+}
+
+.doc-preview > .doc-table {
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+}
+
+.doc-table td {
+  border: 1px solid #e2e8f0;
+  padding: 6px 10px;
+  vertical-align: top;
+  font-size: 10.5pt;
+  line-height: 1.4;
+}
+
+.doc-table .doc-table-p {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.doc-extra {
+  width: 100%;
+  max-width: 8.5in;
+  background: #fff;
+  border-radius: 3px;
+  padding: 12px 0.85in;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.doc-extra-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.doc-extra .doc-p {
+  margin: 0;
+  font-size: 10pt;
+  color: #475569;
+}
+
+@media (max-width: 640px) {
+  .doc-preview {
+    padding: 12px 6px;
+  }
+
+  .doc-preview > .doc-p,
+  .doc-extra {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .doc-preview > .doc-table {
+    font-size: 9pt;
+  }
+}
+
+.pdf-frame {
+  width: 100%;
+  height: min(78vh, 980px);
+  border: 1px solid theme('colors.slate.200');
+  border-radius: 0.75rem;
+  background: #e8eaee;
+}

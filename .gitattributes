@@ -1,0 +1,11 @@
+# Keep the working tree LF everywhere: the app is built and run on Linux
+# (Docker/Render), and CRLF would break docker/entrypoint.sh.
+* text=auto eol=lf
+
+*.docx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
