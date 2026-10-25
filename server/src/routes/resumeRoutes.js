@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { heavyLimiter, uploadLimiter } from '../middleware/rateLimit.js';
 import { uploadResume as uploadMiddleware } from '../middleware/upload.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -41,12 +42,12 @@ export const apiRouter = Router();
 
 apiRouter.use(requireAuth);
 
-apiRouter.post('/resumes', uploadMiddleware, uploadResume);
+apiRouter.post('/resumes', uploadLimiter, uploadMiddleware, uploadResume);
 apiRouter.get('/resumes', listResumes);
 apiRouter.get('/resumes/:id', getResume);
 apiRouter.delete('/resumes/:id', deleteResume);
 
-apiRouter.post('/resumes/:id/analyze', validate(analyzeSchema), startAnalysis);
+apiRouter.post('/resumes/:id/analyze', heavyLimiter, validate(analyzeSchema), startAnalysis);
 apiRouter.get('/resumes/:id/analysis', getAnalysis);
 apiRouter.get('/resumes/:id/sessions', listSessions);
 
@@ -58,11 +59,17 @@ apiRouter.patch(
 );
 apiRouter.post(
   '/resumes/:id/edits/bulk-review',
+  heavyLimiter,
   validate(bulkReviewSchema),
   bulkReviewEdits,
 );
 
-apiRouter.post('/resumes/:id/export', validate(exportRequestSchema), createExport);
+apiRouter.post(
+  '/resumes/:id/export',
+  heavyLimiter,
+  validate(exportRequestSchema),
+  createExport,
+);
 apiRouter.get(
   '/resumes/:id/export-status',
   validate(exportQuerySchema, 'query'),
@@ -85,4 +92,4 @@ apiRouter.get(
 );
 
 apiRouter.get('/sessions/:sessionId', getSession);
-apiRouter.post('/sessions/:sessionId/retry', retrySession);
+apiRouter.post('/sessions/:sessionId/retry', heavyLimiter, retrySession);

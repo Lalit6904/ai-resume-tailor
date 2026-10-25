@@ -2,7 +2,6 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import rateLimit from 'express-rate-limit';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config/env.js';
@@ -16,7 +15,26 @@ import {
   originCheck,
   requestContext,
 } from './middleware/errorHandler.js';
+import { globalApiLimiter } from './middleware/rateLimit.js';
+import { sanitizeRequest } from './middleware/sanitize.js';
 import { AppError } from './utils/errors.js';
+
+const CSP_DIRECTIVES = {
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  formAction: ["'self'"],
+  scriptSrc: ["'self'"],
+  styleSrc: ["'self'", "'unsafe-inline'"],
+  imgSrc: ["'self'", 'data:', 'blob:'],
+  fontSrc: ["'self'", 'data:'],
+  connectSrc: ["'self'"],
+  frameSrc: ["'self'", 'blob:'],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'self'"],
+  // Only force HTTPS upgrades in production; local HTTP development would
+  // otherwise rewrite same-origin asset URLs to https://localhost.
+  ...(config.isProduction ? {} : { upgradeInsecureRequests: null }),
+};
 
 export function createApp() {
   const app = express();
@@ -26,23 +44,7 @@ export function createApp() {
   app.use(requestContext);
   app.use(
     helmet({
-      contentSecurityPolicy: config.isProduction
-        ? {
-            directives: {
-              defaultSrc: ["'self'"],
-              baseUri: ["'self'"],
-              formAction: ["'self'"],
-              scriptSrc: ["'self'"],
-              styleSrc: ["'self'", "'unsafe-inline'"],
-              imgSrc: ["'self'", 'data:', 'blob:'],
-              fontSrc: ["'self'", 'data:'],
-              connectSrc: ["'self'"],
-              frameSrc: ["'self'", 'blob:'],
-              objectSrc: ["'none'"],
-              frameAncestors: ["'self'"],
-            },
-          }
-        : false,
+      contentSecurityPolicy: { directives: CSP_DIRECTIVES },
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: { policy: 'same-site' },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
@@ -71,28 +73,15 @@ export function createApp() {
     }),
   );
 
+  // Rate-limit before parsing bodies so a flood cannot force large allocations.
+  app.use('/api', globalApiLimiter);
+
   app.use(cookieParser());
   app.use(express.json({ limit: '128kb' }));
   app.use(express.urlencoded({ extended: false, limit: '32kb' }));
+  // Strip NoSQL operators, dotted paths, and prototype keys before validation.
+  app.use(sanitizeRequest);
   app.use(originCheck);
-
-  const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: config.RATE_LIMIT_MAX,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    skip: (req) => req.path === '/health',
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: {
-          code: 'RATE_LIMITED',
-          message: 'Too many requests. Please wait a few minutes and try again.',
-        },
-      });
-    },
-  });
-  app.use('/api', apiLimiter);
 
   app.use('/api/auth', authRouter);
   app.use('/api', healthRouter);

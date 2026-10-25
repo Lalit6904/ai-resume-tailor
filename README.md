@@ -179,13 +179,18 @@ startup and refuses unsafe production combinations.
 | `LIBREOFFICE_PATH` | empty | Explicit `soffice` path, otherwise auto-detected. Windows example: `C:\Program Files\LibreOffice\program\soffice.exe` |
 | `RETENTION_DAYS` | `30` | `0` disables expiry |
 | `CLEANUP_INTERVAL_MINUTES` | `60` | `0` disables the scheduled cleanup |
-| `RATE_LIMIT_MAX` | `300` | Requests per IP per 15 minutes |
+| `RATE_LIMIT_MAX` | `300` | Global API requests per IP per 15 minutes |
+| `AUTH_RATE_LIMIT_MAX` | `20` | Register/login attempts per IP per 15 minutes |
+| `HEAVY_RATE_LIMIT_MAX` | `30` | AI analysis, export, bulk-review, and retry requests per IP per 15 minutes |
+| `UPLOAD_RATE_LIMIT_MAX` | `20` | DOCX uploads per IP per 15 minutes |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error`, `silent` |
 | `LOG_AI_METADATA` | `false` | Logs token counts/timing only, never resume text |
 | `VITE_API_BASE_URL` | empty | Optional client API origin; empty uses same-origin/Vite proxy |
 
-Production validation also rejects wildcard CORS origins, a default/weak JWT
-secret, missing AI keys for LLM providers, and incomplete S3 configuration.
+Production validation also rejects wildcard CORS origins, placeholder or
+low-entropy JWT secrets, missing AI keys for LLM providers, and incomplete S3
+configuration. It warns when cookies are not marked `Secure` or when
+`MONGODB_URI` still points at localhost.
 
 ---
 
@@ -515,6 +520,11 @@ LibreOffice previews, backups, costs, and troubleshooting — is in
 
 ## Privacy and security
 
+Security packages in use: `helmet`, `express-rate-limit`, and `dotenv` (already
+listed in `server/package.json`). `express-mongo-sanitize` is deliberately not
+used because it is unmaintained; `server/src/middleware/sanitize.js` provides
+the same operator-stripping behavior with tests.
+
 - Authentication uses a signed JWT in an httpOnly, SameSite=Lax cookie. In
   production, set `COOKIE_SECURE=true`.
 - Every resume/session/edit/export/preview query is scoped by `userId`.
@@ -530,8 +540,28 @@ LibreOffice previews, backups, costs, and troubleshooting — is in
   sent to an external provider. Resume content is never logged.
 - Retention deletes expired resumes, exports, previews, suggestions, and stored
   files. Users can delete a resume immediately.
-- `helmet` adds security headers; CSP is enabled in production.
-- API errors are centralized and do not expose stack traces in production.
+- `helmet` runs globally with a Content-Security-Policy in every environment,
+  plus `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, a
+  strict referrer policy, and `frame-ancestors 'self'`. Only production adds
+  `upgrade-insecure-requests`.
+- Every `/api` request passes a global per-IP limiter. Register/login use a
+  stricter limiter, and uploads, AI analysis, exports, bulk review, and retries
+  have their own limits. All limiters return `429` with a JSON `error.code` and
+  `Retry-After`.
+- Request bodies and query strings are sanitized before validation: MongoDB
+  operators (`$ne`, `$gt`, `$where`), dotted paths, `__proto__`/`constructor`/
+  `prototype` keys, and NUL bytes are stripped recursively. Zod then rejects any
+  payload whose shape was altered.
+- JWTs are signed and verified with an explicit `HS256` algorithm; tokens using
+  a different algorithm are rejected.
+- API errors are centralized. 4xx responses may include safe validation
+  details; 5xx responses return only a generic message and a request ID.
+  Database errors, stack traces, and internal messages are logged server-side in
+  every environment, including production.
+- Client-supplied `X-Request-Id` values are accepted only when they match a
+  conservative 8–128 character format; otherwise a UUID is generated.
+- The rate-limit store is in-memory and therefore per process. Use a shared
+  Redis/Upstash store if you run more than one replica.
 
 ---
 

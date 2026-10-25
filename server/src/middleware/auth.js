@@ -9,7 +9,7 @@ export function signToken(user) {
   return jwt.sign(
     { sub: user._id.toString(), email: user.email, name: user.name },
     config.jwtSecret,
-    { expiresIn: config.jwtExpiresIn, issuer: 'ai-resume-tailor' },
+    { expiresIn: config.jwtExpiresIn, issuer: 'ai-resume-tailor', algorithm: 'HS256' },
   );
 }
 
@@ -44,7 +44,10 @@ export async function loadUser(req) {
   if (!token) throw unauthorized();
   let payload;
   try {
-    payload = jwt.verify(token, config.jwtSecret, { issuer: 'ai-resume-tailor' });
+    payload = jwt.verify(token, config.jwtSecret, {
+      issuer: 'ai-resume-tailor',
+      algorithms: ['HS256'],
+    });
   } catch {
     throw unauthorized('Your session has expired. Please sign in again.', 'SESSION_EXPIRED');
   }

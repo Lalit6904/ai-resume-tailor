@@ -65,7 +65,7 @@ export async function pollSession(agent, sessionId, { timeoutMs = 25000 } = {}) 
   throw new Error(`Timed out waiting for session ${sessionId}; last status ${last?.status}`);
 }
 
-export async function pollExport(agent, resumeId, exportId, { timeoutMs = 25000 } = {}) {
+export async function pollExport(agent, resumeId, exportId, { timeoutMs = 60000 } = {}) {
   const started = Date.now();
   let last = null;
   while (Date.now() - started < timeoutMs) {

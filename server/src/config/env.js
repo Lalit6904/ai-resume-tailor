@@ -57,6 +57,9 @@ const envSchema = z.object({
   RETENTION_DAYS: z.coerce.number().int().min(0).max(3650).default(30),
   CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().min(0).max(1440).default(60),
   RATE_LIMIT_MAX: z.coerce.number().int().min(10).max(100000).default(300),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(5).max(10000).default(20),
+  HEAVY_RATE_LIMIT_MAX: z.coerce.number().int().min(5).max(10000).default(30),
+  UPLOAD_RATE_LIMIT_MAX: z.coerce.number().int().min(5).max(10000).default(20),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'silent']).default('info'),
   LOG_AI_METADATA: boolish.default('false'),
 });
@@ -74,12 +77,39 @@ try {
 }
 
 const warnings = [];
+
+// Reject obvious placeholders, low-entropy values, and short secrets. This is
+// deliberately stricter than a length check because .env.example ships with a
+// long-but-public placeholder that must never be accepted in production.
+const PLACEHOLDER_SECRET_PATTERN =
+  /(change[-_ ]?me|development[-_ ]?only|your[-_ ]?secret|placeholder|example|replace[-_ ]?me|test[-_ ]?only|secret[-_ ]?key|password)/i;
+
+function isWeakSecret(secret) {
+  return (
+    secret.length < 32 ||
+    PLACEHOLDER_SECRET_PATTERN.test(secret) ||
+    new Set(secret).size < 12
+  );
+}
+
 if (parsed.NODE_ENV === 'production') {
-  if (parsed.JWT_SECRET.startsWith('development-only') || parsed.JWT_SECRET.length < 32) {
-    throw new Error('JWT_SECRET must be a unique random string of at least 32 characters in production.');
+  if (isWeakSecret(parsed.JWT_SECRET)) {
+    throw new Error(
+      'JWT_SECRET must be a unique random string of at least 32 characters in production (placeholders and low-entropy values are rejected).',
+    );
   }
   if (parsed.CLIENT_ORIGIN === '*') {
     throw new Error('CLIENT_ORIGIN must be an explicit origin in production (wildcards are unsafe with cookies).');
+  }
+  if (!parsed.COOKIE_SECURE) {
+    warnings.push(
+      'COOKIE_SECURE=false in production: session cookies will be sent over plain HTTP. Set COOKIE_SECURE=true behind HTTPS.',
+    );
+  }
+  if (/^mongodb:\/\/(localhost|127\.0\.0\.1)/i.test(parsed.MONGODB_URI)) {
+    warnings.push(
+      'MONGODB_URI points at localhost in production. Use a managed database (for example MongoDB Atlas) with backups enabled.',
+    );
   }
 }
 if (parsed.AI_PROVIDER !== 'heuristic' && !parsed.AI_API_KEY) {

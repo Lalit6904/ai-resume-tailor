@@ -21,6 +21,9 @@ process.env.STORAGE_DIR = TEST_STORAGE_DIR;
 process.env.RETENTION_DAYS = '30';
 process.env.CLEANUP_INTERVAL_MINUTES = '0';
 process.env.RATE_LIMIT_MAX = '100000';
+process.env.AUTH_RATE_LIMIT_MAX = '10000';
+process.env.HEAVY_RATE_LIMIT_MAX = '10000';
+process.env.UPLOAD_RATE_LIMIT_MAX = '10000';
 process.env.LOG_LEVEL = 'silent';
 process.env.LIBREOFFICE_PATH = '';
 

@@ -54,6 +54,12 @@ services:
         value: "60"
       - key: RATE_LIMIT_MAX
         value: "300"
+      - key: AUTH_RATE_LIMIT_MAX
+        value: "20"
+      - key: HEAVY_RATE_LIMIT_MAX
+        value: "30"
+      - key: UPLOAD_RATE_LIMIT_MAX
+        value: "20"
       - key: AI_PROVIDER
         value: heuristic
       # To use an LLM: set AI_PROVIDER to openai or anthropic and add AI_API_KEY
